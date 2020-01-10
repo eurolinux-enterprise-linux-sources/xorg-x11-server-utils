@@ -5,30 +5,27 @@
 Summary: X.Org X11 X server utilities
 Name: xorg-x11-%{pkgname}
 Version: 7.7
-Release: 2%{?dist}
+Release: 14%{?dist}
 License: MIT
 Group: User Interface/X
 URL: http://www.x.org
 
-Source0:  http://www.x.org/pub/individual/app/iceauth-1.0.5.tar.bz2
-Source2:  http://www.x.org/pub/individual/app/rgb-1.0.5.tar.bz2
-Source3:  http://www.x.org/pub/individual/app/sessreg-1.0.8.tar.bz2
+Source0:  http://www.x.org/pub/individual/app/iceauth-1.0.7.tar.bz2
+Source2:  http://www.x.org/pub/individual/app/rgb-1.0.6.tar.bz2
+Source3:  http://www.x.org/pub/individual/app/sessreg-1.1.0.tar.bz2
 Source5:  http://www.x.org/pub/individual/app/xgamma-1.0.5.tar.bz2
-Source6:  http://www.x.org/pub/individual/app/xhost-1.0.5.tar.bz2
-Source7:  http://www.x.org/pub/individual/app/xmodmap-1.0.7.tar.bz2
-Source8:  http://www.x.org/pub/individual/app/xrandr-1.4.0.tar.bz2
-Source9:  http://www.x.org/pub/individual/app/xrdb-1.0.9.tar.bz2
-Source10: http://www.x.org/pub/individual/app/xrefresh-1.0.4.tar.bz2
-Source11: http://www.x.org/pub/individual/app/xset-1.2.2.tar.bz2
+Source6:  http://www.x.org/pub/individual/app/xhost-1.0.6.tar.bz2
+Source7:  http://www.x.org/pub/individual/app/xmodmap-1.0.8.tar.bz2
+Source8:  http://www.x.org/pub/individual/app/xrandr-1.4.3.tar.bz2
+Source9:  http://www.x.org/pub/individual/app/xrdb-1.1.0.tar.bz2
+Source10: http://www.x.org/pub/individual/app/xrefresh-1.0.5.tar.bz2
+Source11: http://www.x.org/pub/individual/app/xset-1.2.3.tar.bz2
 Source12: http://www.x.org/pub/individual/app/xsetmode-1.0.0.tar.bz2
 Source13: http://www.x.org/pub/individual/app/xsetpointer-1.0.1.tar.bz2
 Source14: http://www.x.org/pub/individual/app/xsetroot-1.1.1.tar.bz2
 Source15: http://www.x.org/pub/individual/app/xstdcmap-1.0.3.tar.bz2
-Source16: http://www.x.org/pub/individual/app/xkill-1.0.3.tar.bz2
-Source17: http://www.x.org/pub/individual/app/xinput-1.6.0.tar.bz2
-
-Patch1: xmodmap-1.0.7-fix-configh.patch
-Patch2: sessreg-utmp.patch
+Source16: http://www.x.org/pub/individual/app/xkill-1.0.4.tar.bz2
+Source17: http://www.x.org/pub/individual/app/xinput-1.6.1.tar.bz2
 
 BuildRequires: xorg-x11-util-macros
 
@@ -36,6 +33,7 @@ BuildRequires: pkgconfig(xmu) pkgconfig(xext) pkgconfig(xrandr)
 BuildRequires: pkgconfig(xxf86vm) pkgconfig(xrender) pkgconfig(xi)
 BuildRequires: pkgconfig(xt) pkgconfig(xpm) pkgconfig(xxf86misc)
 BuildRequires: pkgconfig(xtrans)
+BuildRequires: pkgconfig(xproto) >= 7.0.25
 # xsetroot requires xbitmaps-devel (which was renamed now)
 BuildRequires: xorg-x11-xbitmaps
 # xsetroot
@@ -71,14 +69,6 @@ Utility to perform keystone adjustments on X screens.
 
 %prep
 %setup -q -c %{name}-%{version} -a2 -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -a14 -a15 -a16 -a17
-
-pushd xmodmap-*
-%patch1 -p1 -b .configh
-popd
-
-pushd sessreg-*
-%patch2 -p1 -b .utmp
-popd
 
 %build
 
@@ -171,6 +161,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Tue Nov 03 2015 Adam Jackson <ajax@redhat.com> 7.7-14
+- Sync sources with RHEL 7.2, drop merged patches
+
 * Fri Jun 13 2014 Adam Jackson <ajax@redhat.com> 7.7-2
 - Fix utmp sessreg usage (#978523)
 
