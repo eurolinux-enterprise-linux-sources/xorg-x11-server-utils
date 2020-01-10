@@ -5,49 +5,60 @@
 Summary: X.Org X11 X server utilities
 Name: xorg-x11-%{pkgname}
 Version: 7.5
-Release: 5.2%{?dist}
+Release: 13%{?dist}
 License: MIT
 Group: User Interface/X
 URL: http://www.x.org
 
-Source0:  http://www.x.org/pub/individual/app/iceauth-1.0.4.tar.bz2
+Source0:  http://www.x.org/pub/individual/app/iceauth-1.0.5.tar.bz2
 Source2:  http://www.x.org/pub/individual/app/rgb-1.0.4.tar.bz2
-Source3:  http://www.x.org/pub/individual/app/sessreg-1.0.5.tar.bz2
+Source3:  http://www.x.org/pub/individual/app/sessreg-1.0.6.tar.bz2
 Source5:  http://www.x.org/pub/individual/app/xgamma-1.0.4.tar.bz2
 Source6:  http://www.x.org/pub/individual/app/xhost-1.0.4.tar.bz2
 Source7:  http://www.x.org/pub/individual/app/xmodmap-1.0.5.tar.bz2
-Source8:  http://www.x.org/pub/individual/app/xrandr-1.3.4.tar.bz2
+Source8:  http://www.x.org/pub/individual/app/xrandr-1.3.5.tar.bz2
 Source9:  http://www.x.org/pub/individual/app/xrdb-1.0.9.tar.bz2
 Source10: http://www.x.org/pub/individual/app/xrefresh-1.0.4.tar.bz2
-Source11: http://www.x.org/pub/individual/app/xset-1.2.1.tar.bz2
+Source11: http://www.x.org/pub/individual/app/xset-1.2.2.tar.bz2
 Source12: http://www.x.org/pub/individual/app/xsetmode-1.0.0.tar.bz2
 Source13: http://www.x.org/pub/individual/app/xsetpointer-1.0.1.tar.bz2
 Source14: http://www.x.org/pub/individual/app/xsetroot-1.1.0.tar.bz2
 Source15: http://www.x.org/pub/individual/app/xstdcmap-1.0.2.tar.bz2
+Source16: http://www.x.org/pub/individual/app/xkill-1.0.3.tar.bz2
+Source17: http://www.x.org/pub/individual/app/xinput-1.6.0.tar.bz2
+
+# NOTE: Each upstream tarball has its own "PatchN" section, taken from
+# multiplying the "SourceN" line times 100.  Please keep them in this
+# order.  Also, please keep each patch specific to a single upstream tarball,
+# so that they don't have to be split in half when submitting upstream.
+#
+# iceauth section
+#Patch0: 
 
 # rgb section
 Patch1100: rgb-1.0.0-datadir-rgbpath-fix.patch
-
-Patch1200: xrandr-1.3.4-hush.patch
 
 BuildRequires: xorg-x11-util-macros
 
 BuildRequires: pkgconfig(xmu) pkgconfig(xext) pkgconfig(xrandr)
 BuildRequires: pkgconfig(xxf86vm) pkgconfig(xrender) pkgconfig(xi)
 BuildRequires: pkgconfig(xt) pkgconfig(xpm) pkgconfig(xxf86misc)
-# xsetroot requires xbitmaps-devel
-BuildRequires: xbitmaps-devel
+# xsetroot requires xbitmaps-devel (which was renamed now)
+BuildRequires: xorg-x11-xbitmaps
 # xsetroot
 BuildRequires: libXcursor-devel
+# xinput
+BuildRequires: libXinerama-devel
 
 # xrdb, sigh
 Requires: mcpp
-
-Requires: libXrandr >= 1.2.0 libXcursor
+# older -apps had xinput and xkill, moved them here because they're
+# a) universally useful and b) don't require Xaw
+Conflicts: xorg-x11-apps < 7.6-4
 
 Provides: iceauth rgb sessreg xgamma xhost
 Provides: xmodmap xrandr xrdb xrefresh xset xsetmode xsetpointer
-Provides: xsetroot xstdcmap
+Provides: xsetroot xstdcmap xinput xkill
 
 %description
 A collection of utilities used to tweak and query the runtime configuration
@@ -64,10 +75,9 @@ Utility to perform keystone adjustments on X screens.
 %endif
 
 %prep
-%setup -q -c %{name}-%{version} -a2 -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -a14 -a15
+%setup -q -c %{name}-%{version} -a2 -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -a14 -a15 -a16 -a17
 
 #patch1100 -p0 -b .datadir-rgbpath-fix
-%patch1200 -p0 -b .hush
 
 %build
 
@@ -129,6 +139,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/showrgb
 %{_bindir}/xgamma
 %{_bindir}/xhost
+%{_bindir}/xinput
+%{_bindir}/xkill
 %{_bindir}/xmodmap
 %{_bindir}/xrandr
 %{_bindir}/xrdb
@@ -144,6 +156,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/showrgb.1*
 %{_mandir}/man1/xgamma.1*
 %{_mandir}/man1/xhost.1*
+%{_mandir}/man1/xinput.1*
+%{_mandir}/man1/xkill.1*
 %{_mandir}/man1/xmodmap.1*
 %{_mandir}/man1/xrandr.1*
 %{_mandir}/man1/xrdb.1*
@@ -161,12 +175,30 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
-* Mon Oct 03 2011 Adam Jackson <ajax@redhat.com> 7.5-5.2
-- xrandr-1.3.4-hush.patch: Silence a misleading diagnostic on non-randr-1.2
-  servers (#740146)
+* Tue May 15 2012 Peter Hutterer <peter.hutterer@redhat.com> 7.5-13
+- xinput 1.6.0
 
-* Tue Jun 28 2011 Adam Jackson <ajax@redhat.com> 7.5-5.1
-- Import from Fedora for RHEL6.2 rebase (#713862)
+* Tue Apr 17 2012 Peter Hutterer <peter.hutterer@redhat.com> 7.5-12
+- Add libXinerama-devel requires for new xinput
+
+* Tue Apr 17 2012 Peter Hutterer <peter.hutterer@redhat.com> 7.5-11
+- xinput 1.5.99.901
+
+* Sat Jan 14 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 7.5-10
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
+
+* Thu Dec 22 2011 Peter Hutterer <peter.hutterer@redhat.com> 7.5-9
+- xinput 1.5.4
+
+* Thu Nov 10 2011 Adam Jackson <ajax@redhat.com> 7.5-8
+- Move xinput and xkill here from xorg-x11-apps
+
+* Mon Oct 10 2011 Matěj Cepl <mcepl@redhat.com> - 7.5-7
+- Fix BuildRequires ... xbitmaps-devel does not exist anymore (RHBZ #744751)
+- Upgrade to the latest upstream iceauth, rgb, sessreg, and xrandr
+
+* Mon Aug 01 2011 Peter Hutterer <peter.hutterer@redhat.com> 7.5-6
+- xset 1.2.2
 
 * Wed Apr 06 2011 Dave Airlie <airlied@redhat.com> 7.5-5
 - xrdb 1.0.9 (CVE-2011-0465)
