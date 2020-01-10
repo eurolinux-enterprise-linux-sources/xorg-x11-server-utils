@@ -4,38 +4,31 @@
 
 Summary: X.Org X11 X server utilities
 Name: xorg-x11-%{pkgname}
-Version: 7.4
-Release: 15%{?dist}.2
+Version: 7.5
+Release: 5.2%{?dist}
 License: MIT
 Group: User Interface/X
 URL: http://www.x.org
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-Source0:  http://www.x.org/pub/individual/app/iceauth-1.0.3.tar.bz2
-Source2:  http://www.x.org/pub/individual/app/rgb-1.0.3.tar.bz2
+Source0:  http://www.x.org/pub/individual/app/iceauth-1.0.4.tar.bz2
+Source2:  http://www.x.org/pub/individual/app/rgb-1.0.4.tar.bz2
 Source3:  http://www.x.org/pub/individual/app/sessreg-1.0.5.tar.bz2
-Source5:  http://www.x.org/pub/individual/app/xgamma-1.0.3.tar.bz2
-Source6:  http://www.x.org/pub/individual/app/xhost-1.0.3.tar.bz2
-Source7:  http://www.x.org/pub/individual/app/xmodmap-1.0.4.tar.bz2
-Source8:  http://www.x.org/pub/individual/app/xrandr-1.3.0.tar.bz2
-Source9:  http://www.x.org/pub/individual/app/xrdb-1.0.6.tar.bz2
-Source10: http://www.x.org/pub/individual/app/xrefresh-1.0.3.tar.bz2
-Source11: http://www.x.org/pub/individual/app/xset-1.0.4.tar.bz2
+Source5:  http://www.x.org/pub/individual/app/xgamma-1.0.4.tar.bz2
+Source6:  http://www.x.org/pub/individual/app/xhost-1.0.4.tar.bz2
+Source7:  http://www.x.org/pub/individual/app/xmodmap-1.0.5.tar.bz2
+Source8:  http://www.x.org/pub/individual/app/xrandr-1.3.4.tar.bz2
+Source9:  http://www.x.org/pub/individual/app/xrdb-1.0.9.tar.bz2
+Source10: http://www.x.org/pub/individual/app/xrefresh-1.0.4.tar.bz2
+Source11: http://www.x.org/pub/individual/app/xset-1.2.1.tar.bz2
 Source12: http://www.x.org/pub/individual/app/xsetmode-1.0.0.tar.bz2
 Source13: http://www.x.org/pub/individual/app/xsetpointer-1.0.1.tar.bz2
-Source14: http://www.x.org/pub/individual/app/xsetroot-1.0.3.tar.bz2
-Source15: http://www.x.org/pub/individual/app/xstdcmap-1.0.1.tar.bz2
-# NOTE: Each upstream tarball has its own "PatchN" section, taken from
-# multiplying the "SourceN" line times 100.  Please keep them in this
-# order.  Also, please keep each patch specific to a single upstream tarball,
-# so that they don't have to be split in half when submitting upstream.
-#
-# iceauth section
-#Patch0: 
+Source14: http://www.x.org/pub/individual/app/xsetroot-1.1.0.tar.bz2
+Source15: http://www.x.org/pub/individual/app/xstdcmap-1.0.2.tar.bz2
 
 # rgb section
 Patch1100: rgb-1.0.0-datadir-rgbpath-fix.patch
-Patch1101: cve-2011-0465.patch
+
+Patch1200: xrandr-1.3.4-hush.patch
 
 BuildRequires: xorg-x11-util-macros
 
@@ -44,11 +37,13 @@ BuildRequires: pkgconfig(xxf86vm) pkgconfig(xrender) pkgconfig(xi)
 BuildRequires: pkgconfig(xt) pkgconfig(xpm) pkgconfig(xxf86misc)
 # xsetroot requires xbitmaps-devel
 BuildRequires: xbitmaps-devel
+# xsetroot
+BuildRequires: libXcursor-devel
 
 # xrdb, sigh
 Requires: mcpp
 
-Requires: libXrandr >= 1.2.0
+Requires: libXrandr >= 1.2.0 libXcursor
 
 Provides: iceauth rgb sessreg xgamma xhost
 Provides: xmodmap xrandr xrdb xrefresh xset xsetmode xsetpointer
@@ -72,9 +67,7 @@ Utility to perform keystone adjustments on X screens.
 %setup -q -c %{name}-%{version} -a2 -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -a14 -a15
 
 #patch1100 -p0 -b .datadir-rgbpath-fix
-pushd xrdb-*
-%patch1101 -p1 -b .cve-2011-0465
-popd
+%patch1200 -p0 -b .hush
 
 %build
 
@@ -85,16 +78,16 @@ popd
       case $app in
          rgb-*)
             # FIXME: run autotools junk to kick in our patch
-            aclocal --force
-            automake -f
-            autoconf
+            #aclocal --force
+            #automake -f
+            #autoconf
             %configure ;# --with-rgb-db=%{_datadir}/X11
             ;;
 	 xset-*)
 	    # FIXME: run autotools junk to kick in our patch
-	    aclocal --force
-	    automake -f
-	    autoconf
+	    #aclocal --force
+	    #automake -f
+	    #autoconf
 	    %configure
 	    ;;
          *)
@@ -145,7 +138,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/xsetpointer
 %{_bindir}/xsetroot
 %{_bindir}/xstdcmap
-%dir %{_datadir}/X11
 %{_datadir}/X11/rgb.txt
 %{_mandir}/man1/iceauth.1*
 %{_mandir}/man1/sessreg.1*
@@ -169,11 +161,51 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
-* Wed Apr 13 2011 Adam Jackson <ajax@redhat.com> 7.4-15.el6_0.2
-- cve-2011-0465: Fix quoting and escaping logic to match upstream (#696310)
+* Mon Oct 03 2011 Adam Jackson <ajax@redhat.com> 7.5-5.2
+- xrandr-1.3.4-hush.patch: Silence a misleading diagnostic on non-randr-1.2
+  servers (#740146)
 
-* Wed Mar 16 2011 Adam Jackson <ajax@redhat.com> 7.4-15.el6_0.1
-- cve-2011-0465: Sanitize cpp macro expansion. (CVE 2011-0465)
+* Tue Jun 28 2011 Adam Jackson <ajax@redhat.com> 7.5-5.1
+- Import from Fedora for RHEL6.2 rebase (#713862)
+
+* Wed Apr 06 2011 Dave Airlie <airlied@redhat.com> 7.5-5
+- xrdb 1.0.9 (CVE-2011-0465)
+
+* Tue Feb 08 2011 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 7.5-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
+
+* Fri Nov 12 2010 Peter Hutterer <peter.hutterer@redhat.com> 7.5-3
+- xset 1.2.1
+- xrefresh 1.0.4
+- xgamma 1.0.4
+- xrdb 1.0.7
+
+* Mon Nov 01 2010 Peter Hutterer <peter.hutterer@redhat.com> 7.5-2
+- xsetroot requires libXcursor-devel now
+
+* Mon Nov 01 2010 Peter Hutterer <peter.hutterer@redhat.com> 7.5-1
+- iceauth 1.0.4
+- rgb 1.0.4
+- xhost 1.0.4
+- xmodmap 1.0.5
+- xrandr 1.3.4
+- xsetroot 1.1.0
+- xstdcmap 1.0.2
+
+* Fri Aug 06 2010 Peter Hutterer <peter.hutterer@redhat.com> 7.4-20
+- xset 1.2.0
+
+* Sun Jul 25 2010 Peter Hutterer <peter.hutterer@redhat.com> 7.4-19
+- xrandr 1.3.3
+
+* Tue Jul 20 2010 Peter Hutterer <peter.hutterer@redhat.com> 7.4-18
+- xset 1.1.0
+
+* Mon Jul 12 2010 Dan Horák <dan[at]danny.cz> - 7.4-17
+- nothing is patched => don't run autotools (fixes problems with autoconf 2.66)
+
+* Fri Mar 05 2010 Matěj Cepl <mcepl@redhat.com> - 7.4-16
+- Fixed bad directory ownership of /usr/share/X11
 
 * Mon Nov 09 2009 Adam Jackson <ajax@redhat.com> 7.4-15
 - Also drop xcmsdb virtual Provide.
