@@ -1,0 +1,13 @@
+--- sessreg-1.0.6/sessreg.h	2010-01-17 00:35:28.000000000 +0530
++++ sessreg-1.0.6/sessreg.h	2013-09-06 00:08:17.944934703 +0530
+@@ -58,8 +58,10 @@ 
+ #endif
+ 
+ #ifdef HAVE_UTMPX_H
++# if HAVE_UTMPX_UT_SYSLEN
+ # include <utmpx.h>
+ # define USE_UTMPX
++# endif
+ #endif
+ 
+ #ifdef HAVE_SYS_PARAM_H
