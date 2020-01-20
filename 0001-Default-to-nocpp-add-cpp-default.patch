@@ -1,0 +1,74 @@
+From aeabf7344efeb20f515e804d3acc830730d9433b Mon Sep 17 00:00:00 2001
+From: Adam Jackson <ajax@redhat.com>
+Date: Tue, 21 Jul 2015 09:45:27 -0400
+Subject: [PATCH] Default to -nocpp, add -cpp default
+
+Signed-off-by: Adam Jackson <ajax@redhat.com>
+Signed-off-by: Olivier Fourdan <ofourdan@redhat.com>
+---
+ xrdb.c | 16 +++++++++++-----
+ 1 file changed, 11 insertions(+), 5 deletions(-)
+
+diff --git a/xrdb.c b/xrdb.c
+index 24a6aa5..599edb7 100644
+--- a/xrdb.c
++++ b/xrdb.c
+@@ -746,8 +746,8 @@ Syntax (void)
+ 	     " -screen             do screen-specific resources for one screen\n"
+ 	     " -screens            do screen-specific resources for all screens\n"
+ 	     " -n                  show but don't do changes\n"
+-	     " -cpp filename       preprocessor to use [%s]\n"
+-	     " -nocpp              do not use a preprocessor\n"
++	     " -cpp filename       preprocessor to use [%s if \"default\" given]\n"
++	     " -nocpp              do not use a preprocessor [default]\n"
+ 	     " -query              query resources\n"
+ 	     " -load               load resources from file [default]\n"
+ 	     " -override           add in resources from file\n"
+@@ -761,7 +761,7 @@ Syntax (void)
+ 	     " -Dname[=value], -Uname, -Idirectory    passed to preprocessor\n"
+ 	     "\n"
+ 	     "A - or no input filename represents stdin.\n",
+-	     ProgramName, cpp_program ? cpp_program : "", BACKUP_SUFFIX);
++	     ProgramName, cpp_program ? cpp_program : "none", BACKUP_SUFFIX);
+     exit (1);
+ }
+ 
+@@ -855,6 +855,7 @@ main(int argc, char *argv[])
+     int retainProp = 0;
+     FILE *fp = NULL;
+     Bool need_newline;
++    char *cpp = NULL;
+ 
+     ProgramName = argv[0];
+ 
+@@ -913,13 +914,16 @@ main(int argc, char *argv[])
+ 		continue;
+ 	    } else if (isabbreviation ("-cpp", arg, 2)) {
+ 		if (++i >= argc) Syntax ();
+-		cpp_program = argv[i];
++		if (!strcmp(argv[i], "default"))
++		    cpp = cpp_program;
++		else
++		    cpp = argv[i];
+ 		continue;
+ 	    } else if (!strcmp ("-n", arg)) {
+ 		dont_execute = True;
+ 		continue;
+ 	    } else if (isabbreviation ("-nocpp", arg, 3)) {
+-		cpp_program = NULL;
++		cpp = NULL;
+ 		continue;
+ 	    } else if (isabbreviation ("-query", arg, 2)) {
+ 		oper = OPQUERY;
+@@ -991,6 +995,8 @@ main(int argc, char *argv[])
+ 	else
+ 	    filename = arg;
+     }							/* end for */
++    
++    cpp_program = cpp;
+ 
+ #ifndef WIN32
+     while ((i = open("/dev/null", O_RDONLY)) < 3)
+-- 
+2.4.3
+
