@@ -47,23 +47,23 @@ typedef struct _AuthList {		/* linked list of entries */
 
 #define add_to_list(h,t,e) {if (t) (t)->next = (e); else (h) = (e); (t) = (e);}
 
-typedef int (*ProcessFunc)(const char *, int, int, const char **);
-typedef int (*DoFunc)(const char *, int, IceAuthFileEntry *, void *);
+typedef int (*ProcessFunc)(const char *, int, int, char **);
+typedef int (*DoFunc)(const char *, int, IceAuthFileEntry *, char *);
 
 typedef struct _CommandTable {		/* commands that are understood */
-    const char *name;			/* full name */
-    unsigned int minlen;		/* unique prefix */
-    unsigned int maxlen;		/* strlen(name) */
+    char *name;				/* full name */
+    int minlen;				/* unique prefix */
+    int maxlen;				/* strlen(name) */
     ProcessFunc processfunc;		/* handler */
-    const char *helptext;		/* what to print for help */
+    char *helptext;			/* what to print for help */
 } CommandTable;
 
 struct _extract_data {			/* for iterating */
     FILE *fp;				/* input source */
-    const char *filename;		/* name of input */
+    char *filename;			/* name of input */
     Bool used_stdout;			/* whether or not need to close */
     int nwritten;			/* number of entries written */
-    const char *cmd;			/* for error messages */
+    char *cmd;				/* for error messages */
 };
 
 struct _list_data {			/* for iterating */
@@ -74,8 +74,8 @@ struct _list_data {			/* for iterating */
 /*
  * private data
  */
-static const char *stdin_filename = "(stdin)";  /* for messages */
-static const char *stdout_filename = "(stdout)";  /* for messages */
+static char *stdin_filename = "(stdin)";  /* for messages */
+static char *stdout_filename = "(stdout)";  /* for messages */
 static const char *Yes = "yes";		/* for messages */
 static const char *No = "no";			/* for messages */
 
@@ -85,32 +85,32 @@ static void badcommandline ( const char *cmd );
 static char *skip_space ( char *s );
 static char *skip_nonspace ( char *s );
 static char **split_into_words ( char *src, int *argcp );
-static FILE *open_file ( const char **filenamep, const char *mode, Bool *usedstdp, const char *srcfn, int srcln, const char *cmd );
+static FILE *open_file ( char **filenamep, const char *mode, Bool *usedstdp, const char *srcfn, int srcln, const char *cmd );
 static int read_auth_entries ( FILE *fp, AuthList **headp, AuthList **tailp );
-static int cvthexkey ( const char *hexstr, char **ptrp );
-static int dispatch_command ( const char *inputfilename, int lineno, int argc, const char **argv, const CommandTable *tab, int *statusp );
-static void die ( int sig ) _X_NORETURN;
-static void catchsig ( int sig ) _X_NORETURN;
+static int cvthexkey ( char *hexstr, char **ptrp );
+static int dispatch_command ( const char *inputfilename, int lineno, int argc, char **argv, const CommandTable *tab, int *statusp );
+static void die ( int sig );
+static void catchsig ( int sig );
 static void register_signals ( void );
 static int write_auth_file ( char *tmp_nam, size_t tmp_nam_len );
 static void fprintfhex ( FILE *fp, unsigned int len, const char *cp );
-static int dump_entry ( const char *inputfilename, int lineno, IceAuthFileEntry *auth, void *data );
-static int extract_entry ( const char *inputfilename, int lineno, IceAuthFileEntry *auth, void *data );
+static int dump_entry ( const char *inputfilename, int lineno, IceAuthFileEntry *auth, char *data );
+static int extract_entry ( const char *inputfilename, int lineno, IceAuthFileEntry *auth, char *data );
 static int match_auth ( IceAuthFileEntry *a, IceAuthFileEntry *b, int *authDataSame );
 static int merge_entries ( AuthList **firstp, AuthList *second, int *nnewp, int *nreplp, int *ndupp );
-static int search_and_do ( const char *inputfilename, int lineno, int start, int argc, const char *argv[], DoFunc do_func, void *data );
-static int remove_entry ( const char *inputfilename, int lineno, IceAuthFileEntry *auth, void *data );
-static int do_help ( const char *inputfilename, int lineno, int argc, const char **argv );
-static int do_questionmark ( const char *inputfilename, int lineno, int argc, const char **argv );
-static int do_list ( const char *inputfilename, int lineno, int argc, const char **argv );
-static int do_merge ( const char *inputfilename, int lineno, int argc, const char **argv );
-static int do_extract ( const char *inputfilename, int lineno, int argc, const char **argv );
-static int do_add ( const char *inputfilename, int lineno, int argc, const char **argv );
-static int do_remove ( const char *inputfilename, int lineno, int argc, const char **argv );
-static int do_info ( const char *inputfilename, int lineno, int argc, const char **argv );
-static int do_exit ( const char *inputfilename, int lineno, int argc, const char **argv );
-static int do_quit ( const char *inputfilename, int lineno, int argc, const char **argv );
-static int do_source ( const char *inputfilename, int lineno, int argc, const char **argv );
+static int search_and_do ( const char *inputfilename, int lineno, int start, int argc, char *argv[], DoFunc do_func, char *data );
+static int remove_entry ( const char *inputfilename, int lineno, IceAuthFileEntry *auth, char *data );
+static int do_help ( const char *inputfilename, int lineno, int argc, char **argv );
+static int do_questionmark ( const char *inputfilename, int lineno, int argc, char **argv );
+static int do_list ( const char *inputfilename, int lineno, int argc, char **argv );
+static int do_merge ( const char *inputfilename, int lineno, int argc, char **argv );
+static int do_extract ( const char *inputfilename, int lineno, int argc, char **argv );
+static int do_add ( const char *inputfilename, int lineno, int argc, char **argv );
+static int do_remove ( const char *inputfilename, int lineno, int argc, char **argv );
+static int do_info ( const char *inputfilename, int lineno, int argc, char **argv );
+static int do_exit ( const char *inputfilename, int lineno, int argc, char **argv );
+static int do_quit ( const char *inputfilename, int lineno, int argc, char **argv );
+static int do_source ( const char *inputfilename, int lineno, int argc, char **argv );
 
 static const CommandTable command_table[] = {	/* table of known commands */
 { "add", 2, 3, do_add,
@@ -298,13 +298,9 @@ static char **split_into_words (  /* argvify string */
 	savec = *src;
 	*src = '\0';
 	if (cur == total) {
-	    char **prevargv = argv;
 	    total += WORDSTOALLOC;
 	    argv = (char **) realloc (argv, total * sizeof (char *));
-	    if (!argv) {
-		free (prevargv);
-		return NULL;
-	    }
+	    if (!argv) return NULL;
 	}
 	argv[cur++] = jword;
 	if (savec) src++;		/* if not last on line advance */
@@ -317,7 +313,7 @@ static char **split_into_words (  /* argvify string */
 
 
 static FILE *open_file (
-    const char **filenamep,
+    char **filenamep,
     const char *mode,
     Bool *usedstdp,
     const char *srcfn,
@@ -387,13 +383,12 @@ static int read_auth_entries (FILE *fp, AuthList **headp, AuthList **tailp)
 
 
 static int cvthexkey (	/* turn hex key string into octets */
-    const char *hexstr,
+    char *hexstr,
     char **ptrp)
 {
-    unsigned int i;
-    unsigned int len = 0;
-    char *retval;
-    const char *s;
+    int i;
+    int len = 0;
+    char *retval, *s;
     unsigned char *us;
     char c;
     char savec = '\0';
@@ -436,20 +431,20 @@ static int cvthexkey (	/* turn hex key string into octets */
 	}
     }
     *ptrp = retval;
-    return (int) len;
+    return len;
 }
 
 static int dispatch_command (
     const char *inputfilename,
     int lineno,
     int argc,
-    const char **argv,
+    char **argv,
     const CommandTable *tab,
     int *statusp)
 {
     const CommandTable *ct;
-    const char *cmd;
-    size_t n;
+    char *cmd;
+    int n;
 					/* scan table for command */
     cmd = argv[0];
     n = strlen (cmd);
@@ -474,18 +469,31 @@ static Bool iceauth_allowed = True;	/* if allowed to write auth file */
 static char *iceauth_filename = NULL;
 static volatile Bool dieing = False;
 
+#ifdef RETSIGTYPE /* autoconf AC_TYPE_SIGNAL */
+# define _signal_t RETSIGTYPE
+#else /* Imake */
+#ifdef SIGNALRETURNSINT
+#define _signal_t int
+#else
+#define _signal_t void
+#endif
+#endif /* RETSIGTYPE */
+
 /* poor man's puts(), for under signal handlers */
 #define WRITES(fd, S) (void)write((fd), (S), strlen((S)))
 
 /* ARGSUSED */
-static void die (_X_UNUSED int sig)
+static _signal_t die (int sig)
 {
     dieing = True;
     _exit (auth_finalize ());
     /* NOTREACHED */
+#ifdef SIGNALRETURNSINT
+    return -1;				/* for picky compilers */
+#endif
 }
 
-static void catchsig (int sig)
+static _signal_t catchsig (int sig)
 {
 #ifdef SYSV
     if (sig > 0) signal (sig, die);	/* re-establish signal handler */
@@ -501,6 +509,9 @@ static void catchsig (int sig)
 #endif
     die (sig);
     /* NOTREACHED */
+#ifdef SIGNALRETURNSINT
+    return -1;				/* for picky compilers */
+#endif
 }
 
 static void register_signals (void)
@@ -559,7 +570,7 @@ int auth_initialize ( char *authfilename )
 			 ICEAUTH_DEFAULT_TIMEOUT, 
 			 (break_locks ? 0L : ICEAUTH_DEFAULT_DEADTIME));
 	if (n != IceAuthLockSuccess) {
-	    const char *reason = "unknown error";
+	    char *reason = "unknown error";
 	    switch (n) {
 	      case IceAuthLockError:
 		reason = "error";
@@ -714,7 +725,7 @@ int process_command (
     const char *inputfilename,
     int lineno,
     int argc,
-    const char **argv)
+    char **argv)
 {
     int status;
 
@@ -751,10 +762,10 @@ static void fprintfhex (
 
 /* ARGSUSED */
 static int dump_entry (
-    const char *inputfilename _X_UNUSED,
-    int lineno _X_UNUSED,
+    const char *inputfilename,
+    int lineno,
     IceAuthFileEntry *auth,
-    void *data)
+    char *data)
 {
     struct _list_data *ld = (struct _list_data *) data;
     FILE *fp = ld->fp;
@@ -787,7 +798,7 @@ static int extract_entry (
     const char *inputfilename,
     int lineno,
     IceAuthFileEntry *auth,
-    void *data)
+    char *data)
 {
     struct _extract_data *ed = (struct _extract_data *) data;
 
@@ -924,15 +935,15 @@ static int search_and_do (
     int lineno,
     int start,
     int argc,
-    const char *argv[],
+    char *argv[],
     DoFunc do_func,
-    void *data)
+    char *data)
 {
     int i;
     int status = 0;
     int errors = 0;
     AuthList *l, *next;
-    const char *protoname, *protodata, *netid, *authname;
+    char *protoname, *protodata, *netid, *authname;
 
     for (l = iceauth_head; l; l = next)
     {
@@ -985,10 +996,10 @@ static int search_and_do (
 
 /* ARGSUSED */
 static int remove_entry (
-    const char *inputfilename _X_UNUSED,
-    int lineno _X_UNUSED,
+    const char *inputfilename,
+    int lineno,
     IceAuthFileEntry *auth,
-    void *data)
+    char *data)
 {
     int *nremovedp = (int *) data;
     AuthList **listp = &iceauth_head;
@@ -1028,7 +1039,7 @@ int print_help (
 	    n++;
 	}
     } else {
-	size_t len = strlen (cmd);
+	int len = strlen (cmd);
 	for (ct = command_table; ct->name; ct++) {
 	    if (strncmp (cmd, ct->name, len) == 0) {
 		fprintf (fp, "%s\n\n", ct->helptext);
@@ -1044,9 +1055,9 @@ static int do_help (
     const char *inputfilename,
     int lineno,
     int argc,
-    const char **argv)
+    char **argv)
 {
-    const char *cmd = (argc > 1 ? argv[1] : NULL);
+    char *cmd = (argc > 1 ? argv[1] : NULL);
     int n;
 
     n = print_help (stdout, cmd);
@@ -1064,7 +1075,7 @@ static int do_help (
     if (n == 0) {
 	prefix (inputfilename, lineno);
 	/* already know that cmd is set in this case */
-	fprintf (stderr, "no help for nonexistent command \"%s\"\n", cmd);
+	fprintf (stderr, "no help for noexistent command \"%s\"\n", cmd);
     }
 
     return 0;
@@ -1075,15 +1086,15 @@ static int do_help (
  */
 /* ARGSUSED */
 static int do_questionmark (
-    const char *inputfilename _X_UNUSED,
-    int lineno _X_UNUSED,
-    int argc _X_UNUSED,
-    const char **argv _X_UNUSED)
+    const char *inputfilename,
+    int lineno,
+    int argc,
+    char **argv)
 {
     const CommandTable *ct;
-    unsigned int i;
+    int i;
 #define WIDEST_COLUMN 72
-    unsigned int col = WIDEST_COLUMN;
+    int col = WIDEST_COLUMN;
 
     printf ("Commands:\n");
     for (ct = command_table; ct->name; ct++) {
@@ -1116,7 +1127,7 @@ static int do_list (
     const char *inputfilename,
     int lineno,
     int argc,
-    const char **argv)
+    char **argv)
 {
     struct _list_data ld;
 
@@ -1127,7 +1138,7 @@ static int do_list (
 
 	if (iceauth_head) {
 	    for (l = iceauth_head; l; l = l->next) {
-		dump_entry (inputfilename, lineno, l->auth, &ld);
+		dump_entry (inputfilename, lineno, l->auth, (char *) &ld);
 	    }
 	}
 	return 0;
@@ -1135,7 +1146,7 @@ static int do_list (
     else
     {
 	return (search_and_do (inputfilename, lineno, 1, argc, argv,
-	    dump_entry, &ld));
+	    dump_entry, (char *) &ld));
     }
 }
 
@@ -1146,7 +1157,7 @@ static int do_merge (
     const char *inputfilename,
     int lineno,
     int argc,
-    const char **argv)
+    char **argv)
 {
     int i;
     int errors = 0;
@@ -1162,7 +1173,7 @@ static int do_merge (
     listhead = listtail = NULL;
 
     for (i = 1; i < argc; i++) {
-	const char *filename = argv[i];
+	char *filename = argv[i];
 	FILE *fp;
 	Bool used_stdin = False;
 
@@ -1210,7 +1221,7 @@ static int do_extract (
     const char *inputfilename,
     int lineno,
     int argc,
-    const char **argv)
+    char **argv)
 {
     int errors;
     struct _extract_data ed;
@@ -1227,7 +1238,7 @@ static int do_extract (
     ed.cmd = argv[0];
 
     errors = search_and_do (inputfilename, lineno, 2, argc, argv, 
-	extract_entry, &ed);
+	extract_entry, (char *) &ed);
 
     if (!ed.fp) {
 	fprintf (stderr, 
@@ -1254,15 +1265,15 @@ static int do_add (
     const char *inputfilename,
     int lineno,
     int argc,
-    const char **argv)
+    char **argv)
 { 
     int n, nnew, nrepl, ndup;
-    const char *protoname;
-    const char *protodata_hex;
+    char *protoname;
+    char *protodata_hex;
     char *protodata = NULL; /* not required */
-    const char *netid;
-    const char *authname;
-    const char *authdata_hex;
+    char *netid;
+    char *authname;
+    char *authdata_hex;
     char *authdata = NULL;
     int protodata_len, authdata_len;
     IceAuthFileEntry *auth = NULL;
@@ -1436,7 +1447,7 @@ static int do_remove (
     const char *inputfilename,
     int lineno,
     int argc,
-    const char **argv)
+    char **argv)
 {
     int nremoved = 0;
     int errors;
@@ -1448,7 +1459,7 @@ static int do_remove (
     }
 
     errors = search_and_do (inputfilename, lineno, 1, argc, argv,
-	remove_entry, &nremoved);
+	remove_entry, (char *) &nremoved);
     if (verbose) printf ("%d entries removed\n", nremoved);
     return errors;
 }
@@ -1460,7 +1471,7 @@ static int do_info (
     const char *inputfilename,
     int lineno,
     int argc,
-    const char **argv)
+    char **argv)
 {
     int n;
     AuthList *l;
@@ -1492,10 +1503,10 @@ static Bool alldone = False;
 
 /* ARGSUSED */
 static int do_exit (
-    const char *inputfilename _X_UNUSED,
-    int lineno _X_UNUSED,
-    int argc _X_UNUSED,
-    const char **argv _X_UNUSED)
+    const char *inputfilename,
+    int lineno,
+    int argc,
+    char **argv)
 {
     /* allow bogus stuff */
     alldone = True;
@@ -1507,10 +1518,10 @@ static int do_exit (
  */
 /* ARGSUSED */
 static int do_quit (
-    const char *inputfilename _X_UNUSED,
-    int lineno _X_UNUSED,
-    int argc _X_UNUSED,
-    const char **argv _X_UNUSED)
+    const char *inputfilename,
+    int lineno,
+    int argc,
+    char **argv)
 {
     /* allow bogus stuff */
     die (0);
@@ -1526,13 +1537,13 @@ static int do_source (
     const char *inputfilename,
     int lineno,
     int argc,
-    const char **argv)
+    char **argv)
 {
-    const char *script;
+    char *script;
     char buf[BUFSIZ];
     FILE *fp;
     Bool used_stdin = False;
-    size_t len;
+    int len;
     int errors = 0, status;
     int sublineno = 0;
     char **subargv;
@@ -1573,8 +1584,7 @@ static int do_source (
 	buf[--len] = '\0';		/* remove new line */
 	subargv = split_into_words (buf, &subargc);
 	if (subargv) {
-	    status = process_command (script, sublineno, subargc,
-                                      (const char **) subargv);
+	    status = process_command (script, sublineno, subargc, subargv);
 	    free ((char *) subargv);
 	    errors += status;
 	} else {

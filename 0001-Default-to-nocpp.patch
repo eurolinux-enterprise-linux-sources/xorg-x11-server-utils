@@ -1,0 +1,55 @@
+diff -up xrdb-1.0.9/xrdb.c.nocpp xrdb-1.0.9/xrdb.c
+--- xrdb-1.0.9/xrdb.c.nocpp	2011-04-05 12:01:15.000000000 -0400
++++ xrdb-1.0.9/xrdb.c	2013-10-02 10:48:30.774355639 -0400
+@@ -845,23 +845,6 @@ main(int argc, char *argv[])
+     /* initialize the includes String struct */
+     addstring(&includes, "");
+ 
+-    /* Pick the default cpp to use.  This needs to be done before
+-     * we parse the command line in order to honor -nocpp which sets
+-     * it back to NULL.
+-     */
+-    if (cpp_program == NULL) {
+-	int number_of_elements
+-	    = (sizeof cpp_locations) / (sizeof cpp_locations[0]);
+-	int j;
+-
+-	for (j = 0; j < number_of_elements; j++) {
+-	    if (access(cpp_locations[j], X_OK) == 0) {
+-		cpp_program = cpp_locations[j];
+-		break;
+-	    }
+-	} 
+-    }
+-
+     /* needs to be replaced with XrmParseCommand */
+ 
+     for (i = 1; i < argc; i++) {
+@@ -956,6 +939,27 @@ main(int argc, char *argv[])
+ 	    filename = arg;
+     }							/* end for */
+ 
++    if (cpp_program != NULL) {
++	int number_of_elements
++	    = (sizeof cpp_locations) / (sizeof cpp_locations[0]);
++	int j;
++
++	for (j = 0; j < number_of_elements; j++) {
++	    char *end, *dup;
++	    /* cut off arguments */
++	    dup = strdup(cpp_locations[j]);
++	    end = strchr(dup,' ');
++	    if (end)
++		*end = '\0';
++	    if (access(dup, X_OK) == 0) {
++		cpp_program = cpp_locations[j];
++		free(dup);
++		break;
++	    }
++	    free(dup);
++	}
++    }
++
+ #ifndef WIN32
+     while ((i = open("/dev/null", O_RDONLY)) < 3)
+ 	; /* make sure later freopen won't clobber things */
