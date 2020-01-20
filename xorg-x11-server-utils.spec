@@ -1,100 +1,78 @@
+%define pkgname server-utils
 # doesn't work yet, needs more nickle bindings
 %define with_xkeystone 0
 
-# Component versions
-%define iceauth 1.0.7
-%define rgb 1.0.6
-%define sessreg 1.1.0
-%define xgamma 1.0.6
-%define xhost 1.0.7
-%define xinput 1.6.2
-%define xkill 1.0.4
-%define xmodmap 1.0.9
-%define xrandr 1.5.0
-%define xrdb 1.1.0
-%define xrefresh 1.0.5
-%define xset 1.2.3
-%define xsetmode 1.0.0
-%define xsetpointer 1.0.1
-%define xsetroot 1.1.1
-%define xstdcmap 1.0.3
+Summary: X.Org X11 X server utilities
+Name: xorg-x11-%{pkgname}
+Version: 7.7
+Release: 4%{?dist}
+License: MIT
+Group: User Interface/X
+URL: http://www.x.org
 
-Summary:    X.Org X11 X server utilities
-Name:       xorg-x11-server-utils
-Version:    7.7
-Release:    20%{?dist}
-License:    MIT
-URL:        http://www.x.org
+Source0:  http://www.x.org/pub/individual/app/iceauth-1.0.5.tar.bz2
+Source2:  http://www.x.org/pub/individual/app/rgb-1.0.5.tar.bz2
+Source3:  http://www.x.org/pub/individual/app/sessreg-1.0.8.tar.bz2
+Source5:  http://www.x.org/pub/individual/app/xgamma-1.0.5.tar.bz2
+Source6:  http://www.x.org/pub/individual/app/xhost-1.0.5.tar.bz2
+Source7:  http://www.x.org/pub/individual/app/xmodmap-1.0.7.tar.bz2
+Source8:  http://www.x.org/pub/individual/app/xrandr-1.4.0.tar.bz2
+Source9:  http://www.x.org/pub/individual/app/xrdb-1.0.9.tar.bz2
+Source10: http://www.x.org/pub/individual/app/xrefresh-1.0.4.tar.bz2
+Source11: http://www.x.org/pub/individual/app/xset-1.2.2.tar.bz2
+Source12: http://www.x.org/pub/individual/app/xsetmode-1.0.0.tar.bz2
+Source13: http://www.x.org/pub/individual/app/xsetpointer-1.0.1.tar.bz2
+Source14: http://www.x.org/pub/individual/app/xsetroot-1.1.1.tar.bz2
+Source15: http://www.x.org/pub/individual/app/xstdcmap-1.0.3.tar.bz2
+Source16: http://www.x.org/pub/individual/app/xkill-1.0.3.tar.bz2
+Source17: http://www.x.org/pub/individual/app/xinput-1.6.0.tar.bz2
 
-Source0:    http://www.x.org/pub/individual/app/iceauth-%{iceauth}.tar.bz2
-Source1:    http://www.x.org/pub/individual/app/rgb-%{rgb}.tar.bz2
-Source2:    http://www.x.org/pub/individual/app/sessreg-%{sessreg}.tar.bz2
-Source3:    http://www.x.org/pub/individual/app/xgamma-%{xgamma}.tar.bz2
-Source4:    http://www.x.org/pub/individual/app/xhost-%{xhost}.tar.bz2
-Source5:    http://www.x.org/pub/individual/app/xinput-%{xinput}.tar.bz2
-Source6:    http://www.x.org/pub/individual/app/xkill-%{xkill}.tar.bz2
-Source7:    http://www.x.org/pub/individual/app/xmodmap-%{xmodmap}.tar.bz2
-Source8:    http://www.x.org/pub/individual/app/xrandr-%{xrandr}.tar.bz2
-Source9:    http://www.x.org/pub/individual/app/xrdb-%{xrdb}.tar.bz2
-Source10:   http://www.x.org/pub/individual/app/xrefresh-%{xrefresh}.tar.bz2
-Source11:   http://www.x.org/pub/individual/app/xset-%{xset}.tar.bz2
-Source12:   http://www.x.org/pub/individual/app/xsetmode-%{xsetmode}.tar.bz2
-Source13:   http://www.x.org/pub/individual/app/xsetpointer-%{xsetpointer}.tar.bz2
-Source14:   http://www.x.org/pub/individual/app/xsetroot-%{xsetroot}.tar.bz2
-Source15:   http://www.x.org/pub/individual/app/xstdcmap-%{xstdcmap}.tar.bz2
+Patch1: xmodmap-1.0.7-fix-configh.patch
+Patch2: 0001-Default-to-nocpp.patch
 
-Patch2: 0001-Default-to-nocpp-add-cpp-default.patch
+BuildRequires: xorg-x11-util-macros
 
-BuildRequires:  xorg-x11-util-macros
+BuildRequires: pkgconfig(xmu) pkgconfig(xext) pkgconfig(xrandr)
+BuildRequires: pkgconfig(xxf86vm) pkgconfig(xrender) pkgconfig(xi)
+BuildRequires: pkgconfig(xt) pkgconfig(xpm) pkgconfig(xxf86misc)
+BuildRequires: pkgconfig(xtrans)
+# xsetroot requires xbitmaps-devel (which was renamed now)
+BuildRequires: xorg-x11-xbitmaps
+# xsetroot
+BuildRequires: libXcursor-devel
+# xinput
+BuildRequires: libXinerama-devel
 
-BuildRequires:  pkgconfig(xbitmaps)
-BuildRequires:  pkgconfig(xcursor)
-BuildRequires:  pkgconfig(xext)
-BuildRequires:  pkgconfig(xi)
-BuildRequires:  pkgconfig(xinerama)
-BuildRequires:  pkgconfig(xmu)
-BuildRequires:  pkgconfig(xpm)
-BuildRequires:  pkgconfig(xrandr) >= 1.5.0
-BuildRequires:  pkgconfig(xrender)
-BuildRequires:  pkgconfig(xt)
-BuildRequires:  pkgconfig(xtrans)
-BuildRequires:  pkgconfig(xxf86misc)
-BuildRequires:  pkgconfig(xxf86vm)
+BuildRequires: autoconf automake libtool
 
-BuildRequires:  libtool
+# older -apps had xinput and xkill, moved them here because they're
+# a) universally useful and b) don't require Xaw
+Conflicts: xorg-x11-apps < 7.6-4
 
-Provides:   iceauth = %{iceauth}
-Provides:   rgb = %{rgb}
-Provides:   sessreg = %{sessreg}
-Provides:   xgamma = %{xgamma}
-Provides:   xhost = %{xhost}
-Provides:   xinput = %{xinput}
-Provides:   xkill = %{xkill}
-Provides:   xmodmap = %{xmodmap}
-Provides:   xrandr = %{xrandr}
-Provides:   xrdb = %{xrdb}
-Provides:   xrefresh = %{xrefresh}
-Provides:   xset = %{xset}
-Provides:   xsetmode = %{xsetmode}
-Provides:   xsetpointer = %{xsetpointer}
-Provides:   xsetroot = %{xsetroot}
-Provides:   xstdcmap = %{xstdcmap}
+Provides: iceauth rgb sessreg xgamma xhost
+Provides: xmodmap xrandr xrdb xrefresh xset xsetmode xsetpointer
+Provides: xsetroot xstdcmap xinput xkill
 
 %description
-A collection of utilities used to tweak and query the runtime configuration of
-the X server.
+A collection of utilities used to tweak and query the runtime configuration
+of the X server.
 
 %if %{with_xkeystone}
 %package -n xkeystone
-Summary:    X display keystone correction
-Requires:   nickle
+Summary: X display keystone correction
+Group: User Interface/X
+Requires: nickle
 
 %description -n xkeystone
 Utility to perform keystone adjustments on X screens.
 %endif
 
 %prep
-%setup -q -c %{name}-%{version} -a1 -a2 -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -a14 -a15
+%setup -q -c %{name}-%{version} -a2 -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -a14 -a15 -a16 -a17
+
+pushd xmodmap-*
+%patch1 -p1 -b .configh
+popd
 
 pushd xrdb-*
 %patch2 -p1 -b .nocpp
@@ -106,31 +84,49 @@ popd
 {
    for app in * ; do
       pushd $app
-      autoreconf -vif
-      %configure
-      make %{?_smp_mflags}
+      case $app in
+         rgb-*)
+            autoreconf -vif
+            %configure ;# --with-rgb-db=%{_datadir}/X11
+            ;;
+	 xset-*)
+            autoreconf -vif
+	    %configure
+	    ;;
+         *)
+            autoreconf -vif
+            %configure
+            ;;
+      esac
+
+      make
       popd
    done
 }
 
 %install
+rm -rf $RPM_BUILD_ROOT
 # Install all apps
 {
    for app in * ; do
       pushd $app
       case $app in
          *)
-            %make_install
+            make install DESTDIR=$RPM_BUILD_ROOT
             ;;
       esac
       popd
    done
 }
 %if !%{with_xkeystone}
-rm -f $RPM_BUILD_ROOT%{_bindir}/xkeystone
+rm -f $RPM_BUILD_ROOT/usr/bin/xkeystone
 %endif
 
+%clean
+rm -rf $RPM_BUILD_ROOT
+
 %files
+%defattr(-,root,root,-)
 %doc
 %{_bindir}/iceauth
 %{_bindir}/sessreg
@@ -168,61 +164,20 @@ rm -f $RPM_BUILD_ROOT%{_bindir}/xkeystone
 
 %if %{with_xkeystone}
 %files -n xkeystone
+%defattr(-,root,root,-)
 %{_bindir}/xkeystone
 %endif
 
 %changelog
-* Wed Feb 01 2017 Adam Jackson <ajax@redhat.com> - 7.7-20
-- Sync with Fedora 25: xgamma 1.0.6, xhost 1.0.7, xinput 1.6.2, xmodmap 1.0.9,
-  xrandr 1.5.0
-
-* Mon Sep 07 2015 Olivier Fourdan <ofourdan@redhat.com> 7.7-14
-- Fix regression introduced by the nocpp patch if no cpp is installed.
-
-* Tue Jul 21 2015 Adam Jackson <ajax@redhat.com> 7.7-13
-- Merge F22, rebase nocpp patch
-
-* Tue Jan 20 2015 Simone Caronni <negativo17@gmail.com> - 7.7-12
-- Update sessreg to 1.1.0.
-
-* Sat Jan 17 2015 Simone Caronni <negativo17@gmail.com> - 7.7-11
-- Update iceauth to 1.0.7.
-
-* Mon Nov 10 2014 Simone Caronni <negativo17@gmail.com> - 7.7-10
-- rgb 1.0.6
-
-* Thu Oct 23 2014 Simone Caronni <negativo17@gmail.com> - 7.7-9
-- Clean up SPEC file, fix rpmlint warnings.
-
-* Wed Oct 01 2014 Adam Jackson <ajax@redhat.com> 7.7-8
-- xrandr 1.4.3
-
-* Mon Aug 18 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 7.7-7
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_22_Mass_Rebuild
-
-* Thu Jun 12 2014 Simone Caronni <negativo17@gmail.com> 7.7-6
-- iceauth 1.0.6
-- xhost 1.0.6
-- xrandr 1.4.2
-- xrefresh 1.0.5
-- xset 1.2.3
-
-* Sun Jun 08 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 7.7-5
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
-
-* Thu Feb 13 2014 Adam Jackson <ajax@redhat.com> 7.7-4.el7
+* Thu Feb 13 2014 Adam Jackson <ajax@redhat.com> 7.7-4
 - Fix configure to not point to mcpp either
 
-* Mon Sep 16 2013 Peter Hutterer <peter.hutterer@redhat.com> 7.7-4
-- xinput 1.6.1
+* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 7.7-3
+- Mass rebuild 2013-12-27
 
-* Mon Sep 09 2013 Peter Hutterer <peter.hutterer@redhat.com> 7.7-3
-- xmodmap 1.0.8
-- xkill 1.0.4
-- xrdb 1.1.0
-
-* Sun Aug 04 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 7.7-2
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_20_Mass_Rebuild
+* Wed Oct 02 2013 Adam Jackson <ajax@redhat.com> 7.7-2
+- xrdb: Default to -nocpp
+- Drop Requires: mcpp to match; install cpp if you need it.
 
 * Wed Mar 27 2013 Adam Jackson <ajax@redhat.com> 7.7-1
 - rgb 1.0.5
